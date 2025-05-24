@@ -1,0 +1,481 @@
+<?xml version="1.0" ?>
+<sdf version="1.8">
+
+  <!--
+    Определяем мир (world) под названием "Moving_ros_100". 
+    Внутри указываем параметры физики, плагины для симуляции, освещение (sun) и объекты (models).
+  -->
+  <world name="Moving_ros_100">
+
+    <!--
+      physics type="ignored" — в некоторых версиях Ignition/Gazebo физика может задаваться 
+      через системные плагины. Параметры:
+        - max_step_size: максимальный шаг интеграции
+        - real_time_factor: желаемая скорость реального времени (1.0 = реальное)
+    -->
+    <physics name="1ms" type="ode">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+
+    <!--
+      Подключение базовых системных плагинов:
+      1) gz-sim-physics-system: для управления физическими контактами
+      2) gz-sim-user-commands-system: для пользовательских команд (например, spawn, remove)
+      3) gz-sim-scene-broadcaster-system: для отображения сцены (3D-графика)
+    -->
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors"/>
+
+
+    <!--
+      Настраиваем источник света "sun" (солнечный свет) с заданным направлением,
+      интенсивностью (diffuse, specular) и другими параметрами.
+    -->
+    <light type="directional" name="sun">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.8 0.8 0.8 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <attenuation>
+        <range>1000</range>
+        <constant>0.9</constant>
+        <linear>0.01</linear>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+
+    <!--
+      Создаём "землю" (ground_plane) — большая плоскость для пола.
+      static=true означает, что объект не участвует в движении, он статичен.
+    -->
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+            </plane>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>100 100</size>
+            </plane>
+          </geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient>
+            <diffuse>0.8 0.8 0.8 1</diffuse>
+            <specular>0.8 0.8 0.8 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!--
+      Модель робота: "my_ros_100". У него корневым звеном (canonical_link) выступает "chassis".
+      pose relative_to='world' означает, что робот будет размещён в абсолютных координатах.
+    -->
+    <model name='my_ros_100' canonical_link='chassis'>
+      <pose relative_to='world'>0 0 0.1 0 0 0</pose>
+
+      <!-- Основное звено: chassis (шасси) -->
+      <link name='chassis'>
+        <pose>0 0 0.05 0 0 0</pose>
+        <inertial>
+          <mass>5</mass>
+          <inertia>
+            <ixx>0.5</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.5</iyy>
+            <iyz>0</iyz>
+            <izz>0.5</izz>
+          </inertia>
+        </inertial>
+        <visual name='visual'>
+          <geometry>
+            <box>
+              <size>0.4 0.3 0.1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.0 0.0 1.0 1</ambient>
+            <diffuse>0.0 0.0 1.0 1</diffuse>
+            <specular>0.0 0.0 1.0 1</specular>
+          </material>
+        </visual>
+        <collision name='collision'>
+          <geometry>
+            <box>
+              <size>0.4 0.3 0.1</size>
+            </box>
+          </geometry>
+        </collision>
+      </link>
+
+      <!-- Переднее левое колесо -->
+      <link name='front_left_wheel'>
+        <pose relative_to="chassis">0.15 0.15 -0.05 -1.5707 0 0</pose>
+        <inertial>
+          <mass>0.2</mass>
+          <inertia>
+            <ixx>0.145833</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.145833</iyy>
+            <iyz>0</iyz>
+            <izz>0.125</izz>
+          </inertia>
+        </inertial>
+        <visual name='visual'>
+          <geometry>
+            <cylinder>
+              <radius>0.05</radius>
+              <length>0.04</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>1.0 0.0 0.0 1</ambient>
+            <diffuse>1.0 0.0 0.0 1</diffuse>
+            <specular>1.0 0.0 0.0 1</specular>
+          </material>
+        </visual>
+        <collision name='collision'>
+          <geometry>
+            <cylinder>
+              <radius>0.05</radius>
+              <length>0.04</length>
+            </cylinder>
+          </geometry>
+        </collision>
+      </link>
+
+      <!-- Переднее правое колесо -->
+      <link name='front_right_wheel'>
+        <pose relative_to="chassis">0.15 -0.15 -0.05 -1.5707 0 0</pose>
+        <inertial>
+          <mass>0.2</mass>
+          <inertia>
+            <ixx>0.145833</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.145833</iyy>
+            <iyz>0</iyz>
+            <izz>0.125</izz>
+          </inertia>
+        </inertial>
+        <visual name='visual'>
+          <geometry>
+            <cylinder>
+              <radius>0.05</radius>
+              <length>0.04</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>1.0 0.0 0.0 1</ambient>
+            <diffuse>1.0 0.0 0.0 1</diffuse>
+            <specular>1.0 0.0 0.0 1</specular>
+          </material>
+        </visual>
+        <collision name='collision'>
+          <geometry>
+            <cylinder>
+              <radius>0.05</radius>
+              <length>0.04</length>
+            </cylinder>
+          </geometry>
+        </collision>
+      </link>
+
+      <!-- Заднее левое колесо -->
+      <link name='rear_left_wheel'>
+        <pose relative_to="chassis">-0.15 0.15 -0.05 -1.5707 0 0</pose>
+        <inertial>
+          <mass>0.2</mass>
+          <inertia>
+            <ixx>0.145833</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.145833</iyy>
+            <iyz>0</iyz>
+            <izz>0.125</izz>
+          </inertia>
+        </inertial>
+        <visual name='visual'>
+          <geometry>
+            <cylinder>
+              <radius>0.05</radius>
+              <length>0.04</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>1.0 0.0 0.0 1</ambient>
+            <diffuse>1.0 0.0 0.0 1</diffuse>
+            <specular>1.0 0.0 0.0 1</specular>
+          </material>
+        </visual>
+        <collision name='collision'>
+          <geometry>
+            <cylinder>
+              <radius>0.05</radius>
+              <length>0.04</length>
+            </cylinder>
+          </geometry>
+        </collision>
+      </link>
+
+      <!-- Заднее правое колесо -->
+      <link name='rear_right_wheel'>
+        <pose relative_to="chassis">-0.15 -0.15 -0.05 -1.5707 0 0</pose>
+        <inertial>
+          <mass>0.2</mass>
+          <inertia>
+            <ixx>0.145833</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.145833</iyy>
+            <iyz>0</iyz>
+            <izz>0.125</izz>
+          </inertia>
+        </inertial>
+        <visual name='visual'>
+          <geometry>
+            <cylinder>
+              <radius>0.05</radius>
+              <length>0.04</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>1.0 0.0 0.0 1</ambient>
+            <diffuse>1.0 0.0 0.0 1</diffuse>
+            <specular>1.0 0.0 0.0 1</specular>
+          </material>
+        </visual>
+        <collision name='collision'>
+          <geometry>
+            <cylinder>
+              <radius>0.05</radius>
+              <length>0.04</length>
+            </cylinder>
+          </geometry>
+        </collision>
+      </link>
+
+      <!-- Основной лидар спереди -->
+      <link name='front_lidar_link'>
+        <pose relative_to='chassis'>0.2 0 0.1 0 0 0</pose>
+        <inertial>
+          <mass>0.1</mass>
+          <inertia>
+            <ixx>0.01</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.01</iyy>
+            <iyz>0</iyz>
+            <izz>0.01</izz>
+          </inertia>
+        </inertial>
+        <visual name='visual'>
+          <geometry>
+            <cylinder>
+              <radius>0.02</radius>
+              <length>0.05</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.0 1.0 0.0 1</ambient>
+            <diffuse>0.0 1.0 0.0 1</diffuse>
+            <specular>0.0 1.0 0.0 1</specular>
+          </material>
+        </visual>
+        <collision name='collision'>
+          <geometry>
+            <cylinder>
+              <radius>0.02</radius>
+              <length>0.05</length>
+            </cylinder>
+          </geometry>
+        </collision>
+        <sensor name="front_lidar_sensor" type="gpu_lidar">
+          <pose>0 0 0 0 0 0</pose>
+          <topic>lidar</topic>
+          <update_rate>10</update_rate>
+          <lidar>
+            <scan>
+              <horizontal>
+                <samples>360</samples>
+                <resolution>1</resolution>
+                <min_angle>-3.14159</min_angle>
+                <max_angle>3.14159</max_angle>
+              </horizontal>
+            </scan>
+            <range>
+              <min>0.1</min>
+              <max>10.0</max>
+              <resolution>0.01</resolution>
+            </range>
+          </lidar>
+          <visualize>true</visualize>
+        </sensor>
+      </link>
+
+      <!-- Соединения колес с шасси -->
+      <joint name="front_left_wheel_joint" type="revolute">
+        <parent>chassis</parent>
+        <child>front_left_wheel</child>
+        <axis>
+          <xyz>0 0 1</xyz>
+        </axis>
+      </joint>
+
+      <joint name="front_right_wheel_joint" type="revolute">
+        <parent>chassis</parent>
+        <child>front_right_wheel</child>
+        <axis>
+          <xyz>0 0 1</xyz>
+        </axis>
+      </joint>
+
+      <joint name="rear_left_wheel_joint" type="revolute">
+        <parent>chassis</parent>
+        <child>rear_left_wheel</child>
+        <axis>
+          <xyz>0 0 1</xyz>
+        </axis>
+      </joint>
+
+      <joint name="rear_right_wheel_joint" type="revolute">
+        <parent>chassis</parent>
+        <child>rear_right_wheel</child>
+        <axis>
+          <xyz>0 0 1</xyz>
+        </axis>
+      </joint>
+
+      <!-- Соединение лидара с шасси -->
+      <joint name="front_lidar_joint" type="fixed">
+        <parent>chassis</parent>
+        <child>front_lidar_link</child>
+      </joint>
+
+      <!-- Плагин для управления роботом -->
+      <plugin filename="gz-sim-diff-drive-system" name="gz::sim::systems::DiffDrive">
+        <left_joint>front_left_wheel_joint</left_joint>
+        <left_joint>rear_left_wheel_joint</left_joint>
+        <right_joint>front_right_wheel_joint</right_joint>
+        <right_joint>rear_right_wheel_joint</right_joint>
+        <wheel_separation>0.3</wheel_separation>
+        <wheel_radius>0.05</wheel_radius>
+        <odom_publish_frequency>10</odom_publish_frequency>
+        <topic>cmd_vel</topic>
+      </plugin>
+
+      <!-- Плагин для публикации одометрии -->
+      <plugin filename="gz-sim-pose-publisher-system" name="gz::sim::systems::PosePublisher">
+        <publish_link_pose>true</publish_link_pose>
+        <publish_sensor_pose>true</publish_sensor_pose>
+        <publish_collision_pose>false</publish_collision_pose>
+        <publish_visual_pose>false</publish_visual_pose>
+        <publish_nested_model_pose>true</publish_nested_model_pose>
+        <use_pose_vector_msg>true</use_pose_vector_msg>
+        <static_publisher>true</static_publisher>
+        <static_update_frequency>1</static_update_frequency>
+      </plugin>
+
+      <!-- Плагин для публикации одометрии -->
+      <plugin filename="gz-sim-odometry-publisher-system" name="gz::sim::systems::OdometryPublisher">
+        <odom_frame>odom</odom_frame>
+        <robot_base_frame>chassis</robot_base_frame>
+        <odom_publish_frequency>10</odom_publish_frequency>
+        <topic>odom</topic>
+      </plugin>
+    </model>
+
+    <!--
+      "green_cube" — зелёный кубик, размером 50x50x50 мм (0.05 м), 
+      располагается на x=1.5 (чуть впереди робота).
+    -->
+
+    <model name="cylinder">
+      <static>true</static>
+      <pose>3 0 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <cylinder>
+              <radius>0.2</radius>
+              <length>1.0</length>
+            </cylinder>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>0.2</radius>
+              <length>1.0</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>1 0 0 1</ambient>
+            <diffuse>1 0 0 1</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+
+    <!--
+      Плагины для движения робота с клавиатуры (TriggeredPublisher).
+      При нажатии определённых клавиш (16777234, 16777235 и т.д.) 
+      публикуется Twist на топик /cmd_vel.
+    -->
+    <!-- Moving Left-->
+    <plugin filename="gz-sim-triggered-publisher-system" name="gz::sim::systems::TriggeredPublisher">
+      <input type="gz.msgs.Int32" topic="/keyboard/keypress">
+        <match field="data">16777234</match>
+      </input>
+      <output type="gz.msgs.Twist" topic="/cmd_vel">
+        linear: {x: 0.0}, angular: {z: 0.5}
+      </output>
+    </plugin>
+
+    <!-- Moving Forward-->
+    <plugin filename="gz-sim-triggered-publisher-system" name="gz::sim::systems::TriggeredPublisher">
+      <input type="gz.msgs.Int32" topic="/keyboard/keypress">
+        <match field="data">16777235</match>
+      </input>
+      <output type="gz.msgs.Twist" topic="/cmd_vel">
+        linear: {x: 0.5}, angular: {z: 0.0}
+      </output>
+    </plugin>
+
+    <!-- Moving Right-->
+    <plugin filename="gz-sim-triggered-publisher-system" name="gz::sim::systems::TriggeredPublisher">
+      <input type="gz.msgs.Int32" topic="/keyboard/keypress">
+        <match field="data">16777236</match>
+      </input>
+      <output type="gz.msgs.Twist" topic="/cmd_vel">
+        linear: {x: 0.0}, angular: {z: -0.5}
+      </output>
+    </plugin>
+
+    <!-- Moving Backward-->
+    <plugin filename="gz-sim-triggered-publisher-system" name="gz::sim::systems::TriggeredPublisher">
+      <input type="gz.msgs.Int32" topic="/keyboard/keypress">
+        <match field="data">16777237</match>
+      </input>
+      <output type="gz.msgs.Twist" topic="/cmd_vel">
+        linear: {x: -0.5}, angular: {z: 0.0}
+      </output>
+    </plugin>
+
+  </world>
+</sdf>
